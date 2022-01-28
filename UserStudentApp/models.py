@@ -12,11 +12,11 @@ class CustomManager(BaseUserManager):
         if not username:
             raise ValueError('User must have an Username')
         user = self.model(
-            email = self.normalize_email(email),
+            email    = self.normalize_email(email),
             username = username,
         )
         user.set_password(password)
-        user.save(using = self._db)
+        user.save(using=self._db)
         return user
 
     def create_superuser(self,email,username,password):
@@ -28,7 +28,7 @@ class CustomManager(BaseUserManager):
         user.is_admin     = True
         user.is_active    = True
         user.is_superuser = True
-        user.save(using = self._db)
+        user.save(using=self._db)
         return user
 
 def get_picture_path(self, filename):
@@ -76,17 +76,17 @@ class Student(models.Model):
     age          = models.PositiveIntegerField(default = 5)
     city         = models.CharField(max_length = 50)
     is_activated = models.BooleanField(default = True)    
-    owner        = models.ForeignKey('CustomUser', related_name= 'student', on_delete= models.CASCADE)
+    owner        = models.ForeignKey('CustomUser', related_name= 'students', on_delete= models.CASCADE)
 
     def __str__(self):
         return self.name
 
 class Course(models.Model):
-    course_name = models.CharField(max_length= 16)
-    students    = models.ManyToManyField(Student, related_name= 'courses')
+    name     = models.CharField(max_length= 16)
+    students = models.ManyToManyField(Student, related_name= 'courses')
 
     def __str__(self):
-        return self.course_name
+        return self.name
 
 class Image(models.Model):
     other_pics = models.ImageField(null= True, blank= True, upload_to= get_other_pictures, default= "default.jpg")
