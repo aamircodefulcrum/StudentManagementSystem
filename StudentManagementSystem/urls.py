@@ -21,14 +21,36 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 
+StudentViewSet = views.StudentViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy'
+})
+
+CourseViewSet = views.CourseViewSet.as_view({
+    'get':'retrieve'
+})
+
+UserViewSet = views.UserViewSet.as_view({
+    'get':'retrieve'
+})
+
+ImagesViewSet = views.ImageViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy'
+})
+
 urlpatterns =  [
     path('admin/', admin.site.urls),
-    path('student/<str:pk>', views.StudentViewSet.as_view({'get': 'retrieve','put': 'update','patch': 'partial_update','delete': 'destroy'}), name='student-detail'), 
-    path('users/<str:pk>', views.UserViewSet.as_view({'get':'retrieve'}), name='customuser-detail'),
-    path('course/<str:pk>', views.CourseViewSet.as_view({'get':'retrieve'}), name='course-detail'),
-    path('images/<str:pk>', views.ImageViewSet.as_view({'get': 'retrieve','put': 'update','patch': 'partial_update','delete': 'destroy'}), name='image-detail'),
+    path('student/<str:pk>', StudentViewSet, name= 'student-detail'), 
+    path('user/<str:pk>', UserViewSet, name= 'customuser-detail'),
+    path('course/<str:pk>', CourseViewSet, name= 'course-detail'),
+    path('images/<str:pk>', ImagesViewSet, name= 'image-detail'),
     path('', include('UserStudentApp.urls')),
     path('auth/', include('rest_framework.urls')),
-    path('auth-token/', token_login, name='login'),
+    path('auth-token/', token_login, name= 'login'),
 ]
-urlpatterns += static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root= settings.MEDIA_ROOT)
