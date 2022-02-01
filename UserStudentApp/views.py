@@ -1,4 +1,4 @@
-from .models import Student, CustomUser, Course, Image
+from .models import Student, CustomUser, Course, UserImage
 from .serializers import StudentSerializer, UserSerializer, CourseSerializer, ImageSerializer
 from rest_framework import permissions,viewsets,status
 from .permissions import IsOwnerOrReadOnly
@@ -12,6 +12,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     permission_classes  = [IsOwnerOrReadOnly,permissions.IsAuthenticated]
     serializer_class    = UserSerializer
+
 
     def get_queryset(self):
         request_user = self.request.user
@@ -33,8 +34,9 @@ class StudentViewSet(viewsets.ModelViewSet):
     `update` and `destroy` actions.
     """
 
-    permission_classes  = [IsOwnerOrReadOnly,permissions.IsAuthenticated]
-    serializer_class    = StudentSerializer
+    permission_classes = [IsOwnerOrReadOnly,permissions.IsAuthenticated]
+    serializer_class   = StudentSerializer
+
 
     def get_queryset(self, *args, **kwargs):
         request_user = self.request.user
@@ -55,9 +57,11 @@ class StudentViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(age= age)
         return queryset
 
+
     def perform_create(self, serializer):
         serializer.save(owner= self.request.user)
-    
+
+
     def destroy(self, request, *args, **kwargs):
         instance= self.get_object()
         if not instance.is_activated:
@@ -76,7 +80,8 @@ class ImageViewSet(viewsets.ModelViewSet):
     permission_classes  = [permissions.IsAuthenticated]
     serializer_class    = ImageSerializer
 
+
     def get_queryset(self, *args, **kwargs):
-        queryset = Image.objects.filter(images__email= self.request.user)
+        queryset = UserImage.objects.filter(user__email= self.request.user)
         return queryset
   
