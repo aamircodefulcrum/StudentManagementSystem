@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Student, CustomUser, Course, Image
+from .models import Student, CustomUser, Course, UserImage
 from django.contrib.auth.admin import UserAdmin
 
 UserAdmin.fieldsets += ('Personal info', {'fields': [ 'contact_num', 'age', 'profile_pic']}),
@@ -15,5 +15,5 @@ class AdminUser(UserAdmin):
 admin.site.register(CustomUser,AdminUser)
 admin.site.register(Student)
 admin.site.register(Course)
-admin.site.register(Image)
+admin.site.register(UserImage)
 
