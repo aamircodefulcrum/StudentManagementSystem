@@ -1,9 +1,10 @@
 from django.db import models    
-from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from datetime import date
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from StudentManagementSystem import settings
 
 
 class CustomManager(BaseUserManager):
@@ -47,7 +48,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=16, null=True)
     username = models.CharField(max_length=16, unique=True)
     contact_num = models.CharField(verbose_name='Contact Number', max_length=11, null=True)
-    age = models.PositiveIntegerField(default=15)
+    age = models.PositiveIntegerField()
     date_joined = models.DateTimeField(verbose_name='date joined', auto_now_add=True)
     last_login = models.DateTimeField(verbose_name='last login', auto_now=True)
     is_admin = models.BooleanField(default=False)
@@ -55,6 +56,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     profile_pic = models.ImageField(upload_to=get_picture_path, default="default.jpg")
+    password_change_date = models.DateField(null=True)
+    is_blocked = models.BooleanField(default=False)
 
     objects = CustomManager()
 
@@ -70,6 +73,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def has_module_perms(self, app_label):
         return True
 
+    def set_password(self, raw_password):
+        super().set_password(raw_password)
+        self.password_change_date = date.today()
+        self.is_blocked = False
+        
     @property
     def is_staff(self):
         return self.is_admin
@@ -77,11 +85,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class Student(models.Model):
     name = models.CharField(max_length=20)
-    age = models.PositiveIntegerField(default=5)
+    age = models.PositiveIntegerField()
     city = models.CharField(max_length=50)
     is_activated = models.BooleanField(default=True)
     owner = models.ForeignKey('CustomUser', related_name='students', on_delete=models.CASCADE)
-    profile_pic = models.ImageField(upload_to=get_other_pictures, default="default.jpg")
+    profile_pic = models.ImageField(upload_to=get_picture_path, default="default.jpg")
 
     def __str__(self):
         return self.name
@@ -92,6 +100,10 @@ class Course(models.Model):
     students = models.ManyToManyField(Student, related_name='courses')
 
     def __str__(self):
+        return self.name
+    
+    @property
+    def get_course_name(self):
         return self.name
 
 

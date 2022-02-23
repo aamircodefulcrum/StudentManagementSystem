@@ -2,21 +2,34 @@ from rest_framework import serializers
 from .models import Student, CustomUser, Course, UserImage
 
 
+class ImageSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = UserImage
+        fields = ['image']
+
+        
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     students = serializers.HyperlinkedRelatedField(many=True, view_name='student-detail', read_only=True)
-    images = serializers.HyperlinkedRelatedField(many=True, view_name='image-detail', read_only=True)
+    images = ImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'url', 'username', 'email', 'contact_num', 'age', 'students', 'profile_pic', 'images']
+        fields = ['id', 'username', 'email', 'contact_num', 'age', 'students', 'profile_pic', 'images']
+
+
+class CourseNameSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['id', 'name']
 
 
 class StudentSerializer(serializers.HyperlinkedModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.name')
-
+    owner = serializers.ReadOnlyField(source='owner.username')
+    courses = CourseNameSerializer(many=True, read_only=True)
+ 
     class Meta:
         model = Student
-        fields = ['id', 'url', 'owner', 'name', 'age', 'city', 'is_activated', 'courses', 'profile_pic']
+        fields = ['id', 'owner', 'name', 'age', 'city', 'is_activated', 'courses', 'profile_pic']
 
 
 class CourseSerializer(serializers.HyperlinkedModelSerializer):
@@ -24,10 +37,19 @@ class CourseSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'url', 'name', 'students']
+        fields = ['id', 'name', 'students']
 
 
-class ImageSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = UserImage
-        fields = ['id', 'image', 'user']
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)

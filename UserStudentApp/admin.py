@@ -6,7 +6,7 @@ UserAdmin.fieldsets += ('Personal info', {'fields': ['contact_num', 'age', 'prof
 
 
 class AdminUser(UserAdmin):
-    list_display = ('email', 'username', 'date_joined', 'last_login', 'is_admin')
+    list_display = ('email', 'username', 'date_joined', 'last_login', 'password_change_date')
     search_fields = ('email', 'username')
     filter_horizontal = ()
     list_filter = ()
