@@ -19,7 +19,7 @@ from UserStudentApp import views
 from rest_framework.authtoken.views import obtain_auth_token as token_login
 from django.conf import settings
 from django.conf.urls.static import static
-
+from django.contrib.auth import views as auth_views
 
 StudentViewSet = views.StudentViewSet.as_view({
     'get': 'retrieve',
@@ -44,10 +44,15 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('student/<str:pk>', StudentViewSet, name='student-detail'),
     path('user/<str:pk>', UserViewSet, name='customuser-detail'),
-    path('course/<str:pk>', CourseViewSet, name='course-detail'),
+    path('courses/<str:pk>', CourseViewSet, name='course-detail'),
     path('images/<str:pk>', ImagesViewSet, name='image-detail'),
     path('', include('UserStudentApp.urls')),
     path('auth/', include('rest_framework.urls')),
-    path('auth-token/', token_login, name='login'),
+    path('login/', views.MyLoginView.as_view(), name='login'),
+    path('auth_token/', token_login, name='token_login'),
+    path('change_password/', views.ChangePasswordView.as_view(), name='change_password'),
+    path('reset_sent/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset_complete', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
