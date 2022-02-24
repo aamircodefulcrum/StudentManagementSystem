@@ -9,7 +9,7 @@ router.register(r'user', views.UserViewSet, basename='users-view')
 router.register(r'course', views.CourseViewSet, basename='courses-view')
 router.register(r'images', views.ImageViewSet, basename='images-view')
 
-user_view = views.UserViewSet.as_view({'get':'retrieve'})
+user_view = views.UserViewSet.as_view({'get': 'retrieve'})
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('', include(router.urls)),

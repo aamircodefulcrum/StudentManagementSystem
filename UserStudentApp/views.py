@@ -1,12 +1,17 @@
 from .models import Student, CustomUser, Course, UserImage
 from .serializers import (StudentSerializer, UserSerializer, CourseSerializer, ImageSerializer,
-                          ChangePasswordSerializer, PasswordResetConfirmSerializer)
+                          ChangePasswordSerializer, PasswordResetConfirmSerializer,
+                          PasswordResetSerializer)
 from django.contrib.auth import authenticate
 from rest_framework import permissions, viewsets, status, generics
 from .permissions import IsOwnerOrReadOnly
 from rest_framework.response import Response
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -114,7 +119,7 @@ class ImageViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class MyLoginView(generics.GenericAPIView):
+class LoginView(generics.GenericAPIView):
     def post(self, request):
         data = request.data
         email = data['username']
@@ -133,7 +138,7 @@ class MyLoginView(generics.GenericAPIView):
             else:
                 return Response({'Message': 'Incorrect Password Entered'})
         except CustomUser.DoesNotExist as e:
-            return Response({'Message': e})
+            return Response({'Message': "Email does not exists."})
 
 
 class ChangePasswordView(generics.UpdateAPIView):
@@ -165,6 +170,62 @@ class ChangePasswordView(generics.UpdateAPIView):
                     'status': 'unsuccessful',
                     'code': status.HTTP_400_BAD_REQUEST,
                     'message': 'New password does not match.',
+                }
+            return Response(response)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetView(generics.CreateAPIView):
+    serializer_class = PasswordResetSerializer
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            email = serializer.data.get('email')
+            try:
+                user = CustomUser.objects.get(email=email)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                subject = 'Password Reset Notification'
+                link = 'localhost:8000/reset/' + uid + '/' + token
+                message = "Use the following link to change your password.\n"+link
+                send_mail(subject, message, 'admin@django.com', ['itsrealboy1@gmail.com'])
+                return Response({'Message': 'Email has been sent to your account please check it.'})
+            except CustomUser.DoesNotExist as e:
+                return Response({'Message': 'Email Does not exists.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'Message': 'Invalid Data Entered'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetConfirmView(generics.UpdateAPIView):
+    serializer_class = PasswordResetConfirmSerializer
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            if serializer.data.get('new_password') == serializer.data.get('confirm_password'):
+                self.object.set_password(serializer.data.get("new_password"))
+                self.object.save()
+                response = {
+                    'status': 'success',
+                    'code': status.HTTP_200_OK,
+                    'message': 'Password updated successfully.',
+                }
+            else:
+                response = {
+                    'status': 'unsuccessful',
+                    'code': status.HTTP_400_BAD_REQUEST,
+                    'message': 'Confirm password does not match.',
                 }
             return Response(response)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
