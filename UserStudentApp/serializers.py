@@ -7,7 +7,7 @@ class ImageSerializer(serializers.HyperlinkedModelSerializer):
         model = UserImage
         fields = ['image']
 
-        
+
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     students = serializers.HyperlinkedRelatedField(many=True, view_name='student-detail', read_only=True)
     images = ImageSerializer(many=True, read_only=True)
@@ -47,7 +47,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class PasswordResetSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email = serializers.EmailField(required=True)
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):

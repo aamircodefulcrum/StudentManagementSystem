@@ -1,9 +1,6 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from UserStudentApp.models import CustomUser
 from datetime import date, timedelta
-from django.utils.http import urlsafe_base64_encode
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 
 
@@ -19,21 +16,14 @@ class Command(BaseCommand):
             if user.is_superuser:
                 continue
             elif timedelta(days=6) < time_left < timedelta(days=10):
-                user.is_blocked = False
-                print(user.email)
-                user.save()
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                token = default_token_generator.make_token(user)
-                link = 'localhost:8000/reset/'+uid+'/'+token
+                link = 'localhost:8000/change_password/'
                 message = "Your password is about to expire in {days} days."\
-                    "Please use the following link to change your password.".format(days=timedelta(days=10)-time_left)
-                send_mail(subject, message, 'admin@django.com', ['itsrealboy1@gmail.com'])
+                    "Please use the following link to change your password.\n".format(days=timedelta(days=10)-time_left)
+                send_mail(subject, message + link, 'admin@django.com', ['itsrealboy1@gmail.com'])
             elif time_left > timedelta(days=9):
                 user.is_blocked = True
                 user.save()
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                token = default_token_generator.make_token(user)
-                link = 'localhost:8000/reset/'+uid+'/'+token
+                link = 'localhost:8000/change_password/'
                 message = "Your password expiry date has crossed the limit due to which your account has been BLOCKED."\
                     "Use the following link to unblock your account.\n" + link
                 send_mail(subject, message, 'admin@django.com', ['itsrealboy1@gmail.com'])
