@@ -25,15 +25,16 @@ class CourseNameSerializer(serializers.HyperlinkedModelSerializer):
 
 class StudentSerializer(serializers.HyperlinkedModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
-    courses = CourseNameSerializer(many=True, read_only=True)
- 
+    courses_list = CourseNameSerializer(many=True, source='courses', read_only=True)
+
     class Meta:
         model = Student
-        fields = ['id', 'owner', 'name', 'age', 'city', 'is_activated', 'courses', 'profile_pic']
+        fields = ['id', 'owner', 'name', 'age', 'city', 'is_activated', 'courses_list', 'profile_pic']
+        write_only_fields = ('courses',)
 
 
 class CourseSerializer(serializers.HyperlinkedModelSerializer):
-    students = serializers.HyperlinkedIdentityField(many=True, view_name='student-detail', read_only=True)
+    students = serializers.HyperlinkedIdentityField(many=True, view_name='student-detail')
 
     class Meta:
         model = Course

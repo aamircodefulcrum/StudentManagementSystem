@@ -12,6 +12,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode
+from rest_framework.authtoken.models import Token
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -24,7 +25,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         request_user = self.request.user
         name = self.request.query_params.get('name')
-        
+
         if request_user.is_superuser:
             queryset = CustomUser.objects.all()
             if name:
@@ -33,7 +34,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = CustomUser.objects.filter(email=request_user)
 
         return queryset
-  
+
 
 class StudentViewSet(viewsets.ModelViewSet):
     """
@@ -49,22 +50,21 @@ class StudentViewSet(viewsets.ModelViewSet):
         if request_user.is_superuser:
             names = self.request.query_params.getlist('name')
             is_activated = self.request.query_params.get('is_activated')
+            queryset = Student.objects.all()
             if names:
-                queryset = Student.objects.filter(Q(name__in=names) | Q(owner__username__in=names))
-            elif is_activated:
-                queryset = Student.objects.filter(is_activated=is_activated)
-            else:
-                queryset = Student.objects.all()
+                queryset = queryset.filter(Q(name__in=names) | Q(owner__username__in=names))
+            if is_activated:
+                queryset = queryset.filter(is_activated=is_activated)
         else:
-            queryset = Student.objects.filter(owner=request_user) 
+            queryset = Student.objects.filter(owner=request_user)
             name = self.request.query_params.get('name')
             age = self.request.query_params.get('age')
             is_activated = self.request.query_params.get('is_activated')
             if name:
                 queryset = queryset.filter(name=name)
-            elif age:
+            if age:
                 queryset = queryset.filter(age=age)
-            elif is_activated:
+            if is_activated:
                 queryset = queryset.filter(is_activated=is_activated)
         return queryset
 
@@ -75,9 +75,9 @@ class StudentViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         if not instance.is_activated:
             self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({"Message": "Account deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response({'Message': "Failed to delete account."}, status=status.HTTP_403_FORBIDDEN)
 
     def update(self, request, *args, **kwargs):
         request_user = self.request.user
@@ -87,13 +87,13 @@ class StudentViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.name = data.get("name", instance.name)
             instance.age = data.get("age", instance.age)
-            instance.city = data.get("city", instance.city)      
+            instance.city = data.get("city", instance.city)
             instance.is_activated = False if data.get('is_activated') is None or data.get('is_activated') == 0 \
-                                             or data.get('is_activated') == "0" else True
+                or data.get('is_activated') == "0" else True
             instance.save()
             return Response({'status': "Content Modified"}, status=status.HTTP_200_OK)
-        else:  
-            is_active = instance.is_activated 
+        else:
+            is_active = instance.is_activated
             if is_active:
                 return Response({'status': "Forbidden Request"}, status=status.HTTP_403_FORBIDDEN)
             else:
@@ -129,16 +129,23 @@ class LoginView(generics.GenericAPIView):
             if user.check_password(password):
                 if user.is_blocked:
                     return Response({
-                        'Message': 'Your account has been blocked because your password has been expired.'\
-                        'An email has been sent to your account please check it.'
-                        })
+                        'Message': 'Your account has been blocked because your password has been expired.'
+                                   'An email has been sent to your account please check it.'
+                    })
                 else:
                     user = authenticate(email=email, password=password)
+                    token = Token.objects.get_or_create(user=user)
                     return Response({'token': user.auth_token.key})
             else:
                 return Response({'Message': 'Incorrect Password Entered'})
-        except CustomUser.DoesNotExist as e:
+        except CustomUser.DoesNotExist:
             return Response({'Message': "Email does not exists."})
+
+
+class LogoutView(generics.GenericAPIView):
+    def get(self, request):
+        request.user.auth_token.delete()
+        return Response({'Message': 'Logout successfully!'}, status=status.HTTP_200_OK)
 
 
 class ChangePasswordView(generics.UpdateAPIView):
@@ -193,11 +200,11 @@ class PasswordResetView(generics.CreateAPIView):
                 token = default_token_generator.make_token(user)
                 subject = 'Password Reset Notification'
                 link = 'localhost:8000/reset/' + uid + '/' + token
-                message = "Use the following link to change your password.\n"+link
+                message = "Use the following link to change your password.\n" + link
                 send_mail(subject, message, 'admin@django.com', ['itsrealboy1@gmail.com'])
                 return Response({'Message': 'Email has been sent to your account please check it.'})
             except CustomUser.DoesNotExist as e:
-                return Response({'Message': 'Email Does not exists.'}, status=status.HTTP_403_FORBIDDEN)
+                return Response({'Message': 'Email Does not exists.'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'Message': 'Invalid Data Entered'}, status=status.HTTP_400_BAD_REQUEST)
 
 
