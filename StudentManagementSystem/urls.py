@@ -19,7 +19,7 @@ from UserStudentApp import views
 from rest_framework.authtoken.views import obtain_auth_token as token_login
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib.auth import views as auth_views
+
 
 StudentViewSet = views.StudentViewSet.as_view({
     'get': 'retrieve',
@@ -49,6 +49,7 @@ urlpatterns = [
     path('', include('UserStudentApp.urls')),
     path('auth/', include('rest_framework.urls')),
     path('login/', views.LoginView.as_view(), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
     path('token/', token_login, name='token_login'),
     path('change_password/', views.ChangePasswordView.as_view(), name='change_password'),
     path('reset_password/', views.PasswordResetView.as_view(), name='reset_password'),
