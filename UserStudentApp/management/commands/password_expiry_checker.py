@@ -16,11 +16,13 @@ class Command(BaseCommand):
             if user.is_superuser:
                 continue
             elif timedelta(days=6) < time_left < timedelta(days=10):
+                print("Email sent to", user.email)
                 link = 'localhost:8000/change_password/'
-                message = "Your password is about to expire in {days} days."\
-                    "Please use the following link to change your password.\n".format(days=timedelta(days=10)-time_left)
+                message = "Your password is about to expire in {}. "\
+                    "Please use the following link to change your password.\n".format(timedelta(days=10)-time_left)
                 send_mail(subject, message + link, 'admin@django.com', ['itsrealboy1@gmail.com'])
             elif time_left > timedelta(days=9):
+                print(user.username, "is Blocked")
                 user.is_blocked = True
                 user.save()
                 link = 'localhost:8000/change_password/'
