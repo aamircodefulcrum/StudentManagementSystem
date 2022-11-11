@@ -14,7 +14,6 @@ from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework.authtoken.models import Token
 
-
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     This viewset automatically provides `list` and `retrieve` actions.
@@ -37,10 +36,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class StudentViewSet(viewsets.ModelViewSet):
-    """
-    This viewset automatically provides `list`, `create`, `retrieve`,
-    `update` and `destroy` actions.
-    """
 
     permission_classes = [IsOwnerOrReadOnly, permissions.IsAuthenticated]
     serializer_class = StudentSerializer
