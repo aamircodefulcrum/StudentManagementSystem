@@ -2,7 +2,15 @@ from rest_framework import serializers
 from .models import Student, CustomUser, Course, UserImage
 
 
+# class TestSerializer(serializers.ModelSerializer):
+#
+#     class Meta:
+#         model = CustomUser
+#         fields = "__all__"
+
 class ImageSerializer(serializers.HyperlinkedModelSerializer):
+    # abc = TestSerializer(read_only=True, source='user')
+
     class Meta:
         model = UserImage
         fields = ['image']
